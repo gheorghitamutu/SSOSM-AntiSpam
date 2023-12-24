@@ -8,111 +8,118 @@ from bs4 import BeautifulSoup
 import email
 from email import header
 import argparse
+import base64
+
 
 class Status(Enum):
     CLEAN = 0
     SPAM = 1
 
-ENCODINGS = ['ascii',
- 'big5',
- 'big5hkscs',
- 'cp037',
- 'cp273',
- 'cp424',
- 'cp437',
- 'cp500',
- 'cp720',
- 'cp737',
- 'cp775',
- 'cp850',
- 'cp852',
- 'cp855',
- 'cp856',
- 'cp857',
- 'cp858',
- 'cp860',
- 'cp861',
- 'cp862',
- 'cp863',
- 'cp864',
- 'cp865',
- 'cp866',
- 'cp869',
- 'cp874',
- 'cp875',
- 'cp932',
- 'cp949',
- 'cp950',
- 'cp1006',
- 'cp1026',
- 'cp1125',
- 'cp1140',
- 'cp1250',
- 'cp1251',
- 'cp1252',
- 'cp1253',
- 'cp1254',
- 'cp1255',
- 'cp1256',
- 'cp1257',
- 'cp1258',
- 'cp65001',
- 'euc_jp',
- 'euc_jis_2004',
- 'euc_jisx0213',
- 'euc_kr',
- 'gb2312',
- 'gbk',
- 'gb18030',
- 'hz',
- 'iso2022_jp',
- 'iso2022_jp_1',
- 'iso2022_jp_2',
- 'iso2022_jp_2004',
- 'iso2022_jp_3',
- 'iso2022_jp_ext',
- 'iso2022_kr',
- 'latin_1',
- 'iso8859_2',
- 'iso8859_3',
- 'iso8859_4',
- 'iso8859_5',
- 'iso8859_6',
- 'iso8859_7',
- 'iso8859_8',
- 'iso8859_9',
- 'iso8859_10',
- 'iso8859_11',
- 'iso8859_13',
- 'iso8859_14',
- 'iso8859_15',
- 'iso8859_16',
- 'johab',
- 'koi8_r',
- 'koi8_t',
- 'koi8_u',
- 'kz1048',
- 'mac_cyrillic',
- 'mac_greek',
- 'mac_iceland',
- 'mac_latin2',
- 'mac_roman',
- 'mac_turkish',
- 'ptcp154',
- 'shift_jis',
- 'shift_jis_2004',
- 'shift_jisx0213',
- 'utf_32',
- 'utf_32_be',
- 'utf_32_le',
- 'utf_16',
- 'utf_16_be',
- 'utf_16_le',
- 'utf_7',
- 'utf_8',
- 'utf_8_sig']
 
-class AntiSpam():
+ENCODINGS = [  # supported by Python 3.6
+    'ascii',
+    'big5',
+    'big5hkscs',
+    'cp037',
+    'cp273',
+    'cp424',
+    'cp437',
+    'cp500',
+    'cp720',
+    'cp737',
+    'cp775',
+    'cp850',
+    'cp852',
+    'cp855',
+    'cp856',
+    'cp857',
+    'cp858',
+    'cp860',
+    'cp861',
+    'cp862',
+    'cp863',
+    'cp864',
+    'cp865',
+    'cp866',
+    'cp869',
+    'cp874',
+    'cp875',
+    'cp932',
+    'cp949',
+    'cp950',
+    'cp1006',
+    'cp1026',
+    'cp1125',
+    'cp1140',
+    'cp1250',
+    'cp1251',
+    'cp1252',
+    'cp1253',
+    'cp1254',
+    'cp1255',
+    'cp1256',
+    'cp1257',
+    'cp1258',
+    'cp65001',
+    'euc_jp',
+    'euc_jis_2004',
+    'euc_jisx0213',
+    'euc_kr',
+    'gb2312',
+    'gbk',
+    'gb18030',
+    'hz',
+    'iso2022_jp',
+    'iso2022_jp_1',
+    'iso2022_jp_2',
+    'iso2022_jp_2004',
+    'iso2022_jp_3',
+    'iso2022_jp_ext',
+    'iso2022_kr',
+    'latin_1',
+    'iso8859_2',
+    'iso8859_3',
+    'iso8859_4',
+    'iso8859_5',
+    'iso8859_6',
+    'iso8859_7',
+    'iso8859_8',
+    'iso8859_9',
+    'iso8859_10',
+    'iso8859_11',
+    'iso8859_13',
+    'iso8859_14',
+    'iso8859_15',
+    'iso8859_16',
+    'johab',
+    'koi8_r',
+    'koi8_t',
+    'koi8_u',
+    'kz1048',
+    'mac_cyrillic',
+    'mac_greek',
+    'mac_iceland',
+    'mac_latin2',
+    'mac_roman',
+    'mac_turkish',
+    'ptcp154',
+    'shift_jis',
+    'shift_jis_2004',
+    'shift_jisx0213',
+    'utf_32',
+    'utf_32_be',
+    'utf_32_le',
+    'utf_16',
+    'utf_16_be',
+    'utf_16_le',
+    'utf_7',
+    'utf_8',
+    'utf_8_sig'
+]
+
+
+class AntiSpam:
+    @staticmethod
     def info(output_file):
         with open(output_file, 'w') as f:
             f.writelines([
@@ -122,6 +129,7 @@ class AntiSpam():
                 "1.0.0\n"
             ])
 
+    @staticmethod
     def decode_text(text):
         for encoding in ENCODINGS:
             try:
@@ -129,7 +137,8 @@ class AntiSpam():
             except Exception as e:
                 pass
         return text.decode(encoding='utf-8', errors='replace')
-    
+
+    @staticmethod
     def extract_text_from_html(html, entry_path):
         try:
             soup = BeautifulSoup(html, 'html.parser')
@@ -141,16 +150,17 @@ class AntiSpam():
             # print(f"SOUP ERROR: {decoded_body} -> {entry_path}")
             # decoded_body = bytes(decoded_body).decode(encoding="ISO-2022-JP", errors='replace')
             return html
-        
+
+    @staticmethod
     def decode_base64(content, entry_path):
         try:
-            import base64
             content = base64.b64decode(content).decode('utf-8')
         except Exception as e:
             # print(f"ERROR: {e} -> {entry_path}")
             pass
         return content
-        
+
+    @staticmethod
     def decode_email(content, entry_path):
         msg = email.message_from_string(content)
 
@@ -199,7 +209,8 @@ class AntiSpam():
 
         # print("\nBody:\n", decoded_body)
         return decoded_text, decoded_body
-                    
+
+    @staticmethod
     def read_emails(path, status):
         data = list()
 
@@ -223,6 +234,7 @@ class AntiSpam():
 
         return data
 
+    @staticmethod
     def load_data(cache_path, input_directory):
         data = []
 
@@ -243,6 +255,7 @@ class AntiSpam():
         
         return data
 
+    @staticmethod
     def train(input_directory, cache_path, model_path):
         data = AntiSpam.load_data(cache_path, input_directory)
         emails, labels = zip(*data)
@@ -281,6 +294,7 @@ class AntiSpam():
             model = (vectorizer, rf)
             pickle.dump(model, fd)
 
+    @staticmethod
     def test(input_folder, model_path):
         data = [
             *AntiSpam.read_emails(f"{input_folder}/clean", Status.CLEAN),
@@ -292,6 +306,7 @@ class AntiSpam():
 
         print(f"Model accuracy {correct_verdicts / len(data)}%!")
 
+    @staticmethod
     def predict(data, model_path):
         with gzip.open(model_path, "rb") as fd:
             tfidf, rf = pickle.load(fd)
@@ -300,7 +315,7 @@ class AntiSpam():
             predictions = rf.predict(data)
             return predictions
 
-
+    @staticmethod
     def scan(input_folder, output_file, model_path):
         data = []
         files = []
@@ -327,6 +342,7 @@ class AntiSpam():
             for i, prediction in enumerate(preds):
                 verdict = verdicts[prediction]
                 fd.write(f'{files[i]}|{verdict}\n')
+
 
 def main():
     parser = argparse.ArgumentParser(add_help=True, description="GRX AntiSpam Filter")
