@@ -348,19 +348,37 @@ def main():
     parser = argparse.ArgumentParser(add_help=True, description="GRX AntiSpam Filter")
     parser.add_argument('-info', action='store', type=str, nargs=1, metavar='<output_file>',
                         help='Write project information to the output file.')
-    parser.add_argument('-train', action='store', type=str, nargs=3, metavar=('<input_folder> <output_cache_file> <output_model_file>'),
-                        help='Train the model with the data from the input folder.')
+    parser.add_argument(
+        '-train',
+        action='store',
+        type=str,
+        nargs=3,
+        metavar=('<input_folder>', '<output_cache_file>', '<output_model_file>'),
+        help='Train the model with the data from the input folder.')
     parser.add_argument('-test', action='store', type=str, nargs=2, metavar=('<input_folder>', '<model_file>'),
                         help='Test the model with the data from the input folder.')
-    parser.add_argument('-scan', action='store', type=str, nargs=3, metavar=('<folder>', '<output_file>', '<model_file>'),
-                        help='Scan the folder and write the results to the output file.')
+    parser.add_argument(
+        '-scan',
+        action='store',
+        type=str,
+        # nargs=3,
+        nargs=2,
+        # metavar=('<folder>', '<output_file>', '<model_file>'),
+        metavar=('<folder>', '<output_file>'),
+        help='Scan the folder and write the results to the output file.'
+    )
 
     args = parser.parse_args()
     
     if args.info:
         AntiSpam.info(output_file=args.info[0])
     elif args.scan:
-        AntiSpam.scan(input_folder=args.scan[0], output_file=args.scan[1], model_path=args.scan[2]),
+        AntiSpam.scan(
+            input_folder=args.scan[0],
+            output_file=args.scan[1],
+            model_path='model-3.6.zip',
+            # model_path=args.scan[2],
+        ),
     elif args.train:
         AntiSpam.train(input_directory=args.train[0], cache_path=args.train[1], model_path=args.train[2])
     elif args.test:
