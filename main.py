@@ -3,7 +3,7 @@ from enum import Enum
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 import gzip
-import pickle
+import joblib
 from bs4 import BeautifulSoup
 import email
 from email import header
@@ -126,7 +126,7 @@ class AntiSpam:
                 "SSOSM AntiSpam\n",
                 "Mutu Gheorghita\n",
                 "GRX\n",
-                "1.0.0\n"
+                "1.0.1\n"
             ])
 
     @staticmethod
@@ -240,7 +240,7 @@ class AntiSpam:
 
         if os.path.exists(cache_path):
             with gzip.open(cache_path, "rb") as fd:
-                data = pickle.load(fd)
+                data = joblib.load(fd)
         else:
             clean_data = AntiSpam.read_emails(f'{input_directory}/Clean', Status.CLEAN)
             spam_data = AntiSpam.read_emails(f'{input_directory}/Spam', Status.SPAM)
@@ -249,7 +249,7 @@ class AntiSpam:
             data.extend(spam_data)
 
             with gzip.open(cache_path, "wb") as fd:
-                pickle.dump(data, fd)
+                joblib.dump(data, fd)
 
         print(f'Dataset size: {len(data)}!')
         
@@ -266,7 +266,7 @@ class AntiSpam:
             strip_accents="unicode",
             lowercase=True,
             encoding='utf-8', 
-            decode_error='ignore', 
+            decode_error='replace', 
             stop_words='english', 
             analyzer='word',
             # max_df=0.01, 
@@ -274,7 +274,7 @@ class AntiSpam:
             # min_df=3, 
             min_df=1, 
             norm='l2', 
-            max_features=5000,
+            max_features=40000,
             token_pattern=r'\b\w+\b',
             # token_pattern=r'(?u)\b\w\w+\b',
             # ngram_range=(1, 1) # take a lot of memory.. 70GB or so for (1, 2)
@@ -283,7 +283,7 @@ class AntiSpam:
         emails = vectorizer.fit_transform(emails).toarray()
 
         rf = RandomForestClassifier(
-            n_estimators=40000, 
+            n_estimators=1000, 
             criterion='gini', 
             verbose=1, 
             n_jobs=24
@@ -292,7 +292,7 @@ class AntiSpam:
 
         with gzip.open(model_path, "wb") as fd:
             model = (vectorizer, rf)
-            pickle.dump(model, fd)
+            joblib.dump(model, fd)
 
     @staticmethod
     def test(input_folder, model_path):
@@ -309,11 +309,11 @@ class AntiSpam:
     @staticmethod
     def predict(data, model_path):
         with gzip.open(model_path, "rb") as fd:
-            tfidf, rf = pickle.load(fd)
+            tfidf, rf = joblib.load(fd)
             rf.verbose = 0  # disable verbose output
             data = tfidf.transform(data)
             predictions = rf.predict(data)
-            return predictions
+            return predictions  # 0 - clean, 1 - spam
 
     @staticmethod
     def scan(input_folder, output_file, model_path):
@@ -376,7 +376,7 @@ def main():
         AntiSpam.scan(
             input_folder=args.scan[0],
             output_file=args.scan[1],
-            model_path='model-3.6.zip',
+            model_path='model-small.joblib',
             # model_path=args.scan[2],
         ),
     elif args.train:
