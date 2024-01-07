@@ -126,7 +126,7 @@ class AntiSpam:
                 "SSOSM AntiSpam\n",
                 "Mutu Gheorghita\n",
                 "GRX\n",
-                "1.0.1\n"
+                "1.0.2\n"
             ])
 
     @staticmethod
@@ -376,7 +376,7 @@ def main():
         AntiSpam.scan(
             input_folder=args.scan[0],
             output_file=args.scan[1],
-            model_path='model-small.joblib',
+            model_path='model.joblib',
             # model_path=args.scan[2],
         ),
     elif args.train:
