@@ -126,7 +126,7 @@ class AntiSpam:
                 "SSOSM AntiSpam\n",
                 "Mutu Gheorghita\n",
                 "GRX\n",
-                "1.0.2\n"
+                "1.0.3\n"
             ])
 
     @staticmethod
@@ -240,13 +240,20 @@ class AntiSpam:
 
         if os.path.exists(cache_path):
             with gzip.open(cache_path, "rb") as fd:
+                print(f'Data model cache exists. Loading data from cache: {cache_path}!')
                 data = joblib.load(fd)
         else:
-            clean_data = AntiSpam.read_emails(f'{input_directory}/Clean', Status.CLEAN)
-            spam_data = AntiSpam.read_emails(f'{input_directory}/Spam', Status.SPAM)
+            lot_1_clean_data = AntiSpam.read_emails(f'{input_directory}/Lot1/Clean', Status.CLEAN)
+            lot_1_spam_data = AntiSpam.read_emails(f'{input_directory}/Lot1/Spam', Status.SPAM)
 
-            data.extend(clean_data)
-            data.extend(spam_data)
+            data.extend(lot_1_clean_data)
+            data.extend(lot_1_spam_data)
+
+            lot_2_clean_data = AntiSpam.read_emails(f'{input_directory}/Lot2/Clean', Status.CLEAN)
+            lot_2_spam_data = AntiSpam.read_emails(f'{input_directory}/Lot2/Spam', Status.SPAM)
+
+            data.extend(lot_2_clean_data)
+            data.extend(lot_2_spam_data)
 
             with gzip.open(cache_path, "wb") as fd:
                 joblib.dump(data, fd)
@@ -297,14 +304,14 @@ class AntiSpam:
     @staticmethod
     def test(input_folder, model_path):
         data = [
-            *AntiSpam.read_emails(f"{input_folder}/clean", Status.CLEAN),
-            *AntiSpam.read_emails(f"{input_folder}/spam", Status.SPAM)
+            *AntiSpam.read_emails(f"{input_folder}/Clean", Status.CLEAN),
+            *AntiSpam.read_emails(f"{input_folder}/Spam", Status.SPAM)
         ]
         emails, labels = zip(*data)
         predictions = AntiSpam.predict(emails, model_path)
         correct_verdicts = sum(map(lambda x: x[0] == x[1], zip(labels, predictions)))
 
-        print(f"Model accuracy {correct_verdicts / len(data)}%!")
+        print(f"Model accuracy {(correct_verdicts / len(data)) * 100}%!")
 
     @staticmethod
     def predict(data, model_path):
@@ -383,6 +390,8 @@ def main():
         AntiSpam.train(input_directory=args.train[0], cache_path=args.train[1], model_path=args.train[2])
     elif args.test:
         AntiSpam.test(input_folder=args.test[0], model_path=args.test[1])
+    else:
+        print('Unknown/missing argument!')
 
 
 if __name__ == "__main__":
